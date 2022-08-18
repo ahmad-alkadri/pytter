@@ -8,13 +8,25 @@ from numpy import ceil
 
 
 class Client:
-    def __init__(self, checkbearer=False):
+    """A main class for the client. When initiated, it 
+    first obtains the guest-token and generated header for 
+    obtaining the tweets without logging in. Further, it contains 
+    functions that would work for scraping tweets for any public
+    twitter user, ultimately returning an exact number of tweet requested
+    if possible.
+    """
 
+    def __init__(self, checkbearer=False):
+        """Initiating the Client class
+
+        Args:
+            checkbearer (bool, optional): If True, will scrape the twitter.com 
+            page to check a new bearer token. Defaults to False.
+        """
         uagent = UserAgent()
-        chosenbrowser = uagent.firefox
+        chosenbrowser = uagent.ie
 
         if checkbearer:
-
             user_agent = {
                 'User-Agent': bearerbrowser,
                 'Referer': url_referer}
@@ -37,7 +49,6 @@ class Client:
                 r'",[a-z]="(.*)",[a-z]="\d{8}"',
                 r.text,
                 re.IGNORECASE)[0].split("\"")[-1]
-
         else:
             bearer = bearerconst
 
@@ -56,7 +67,18 @@ class Client:
             'User-Agent': chosenbrowser
         }
 
-    def prepparams(self, pardicts: dict = {}):
+    def prepparams(self, pardicts: dict = {}) -> dict:
+        """Clean up a dictionary from keys with empty values in it 
+        ('None' as values).
+
+        Args:
+            pardicts (dict, optional): Entered dictionary. 
+            Defaults to {}.
+
+        Returns:
+            dict: The cleaned-up dictionary, free from keys with
+                'None' values.
+        """
 
         paramsprep = {}
         for ke in pardicts.keys():
@@ -65,7 +87,18 @@ class Client:
 
         return paramsprep
 
-    def status_ratelimit(self, resources=None):
+    def status_ratelimit(self, resources: str = None) -> dict:
+        """Check the rate limit of the current Client session.
+
+        Args:
+            resources (str, optional): A comma-separated list of resource 
+                families you want to know the current rate limit disposition for. 
+                Example is 'help,users,search,statuses'. Defaults to None.
+
+        Returns:
+            dict: a dictionary from json of the API response, containing
+                the rate limit informations.
+        """
 
         uro = endpoint_ratelimit
         urf = uro+'?'+urlencode(self.prepparams({'resources': resources}))
@@ -73,22 +106,42 @@ class Client:
         return response
 
     def tweets_user(self,
-                    screen_name,
+                    screen_name: str,
                     since_id: str = None,
                     max_id: str = None,
                     count: int = 10,
                     exclude_replies: bool = False,
-                    include_rts: bool = False):
+                    include_rts: bool = False) -> list:
+        """Scrape the tweets from a user if they have a public profile.
+
+        Args:
+            screen_name (str): The twitter username of the user.
+            since_id (str, optional): The twitter status ID of the earliest tweet 
+                that you'd like to scrape. Defaults to None.
+            max_id (str, optional): The twitter status ID of the latest tweet that 
+                you'd like to scrape. Defaults to None.
+            count (int, optional): The number of twitter statuses that you'd like 
+                to scrape. The final number isn't always exactly the same as 
+                the count requested. Defaults to 10.
+            exclude_replies (bool, optional): Option to exclude tweet replies 
+                from the scraped statuses. Defaults to False.
+            include_rts (bool, optional): Option to include retweets from the 
+                scraped statuses. Defaults to False.
+
+        Returns:
+            list: An array containing dictionaries, each containing data of a status.
+        """
 
         uro = endpoint_tweetuser
         queries = urlencode(
             self.prepparams(
                 {'screen_name': screen_name,
                  'since_id': since_id,
-                 'count': count,
+                 'count': int(float(count)),
                  'max_id': max_id,
-                 'exlude_replies': str(exclude_replies),
-                 'include_rts': str(include_rts)}))
+                 'exlude_replies': (str(exclude_replies)).lower(),
+                 'include_rts': (str(include_rts)).lower()}))
+        print(queries)
         urf = uro+'?'+queries
 
         response = requests.get(urf, headers=self.headers).json()
@@ -101,7 +154,27 @@ class Client:
                             max_id: str = None,
                             count: int = 10,
                             exclude_replies: bool = False,
-                            include_rts: bool = False):
+                            include_rts: bool = False) -> list:
+        """Scrape the tweets from user if they have a public profile. Will try 
+        to return the exact number of the tweets asked.
+
+        Args:
+            screen_name (str): The twitter username of the user.
+            since_id (str, optional): The twitter status ID of the earliest tweet 
+                that you'd like to scrape. Defaults to None.
+            max_id (str, optional): The twitter status ID of the latest tweet that 
+                you'd like to scrape. Defaults to None.
+            count (int, optional): The number of twitter statuses that you'd like 
+                to scrape. The final number isn't always exactly the same as 
+                the count requested. Defaults to 10.
+            exclude_replies (bool, optional): Option to exclude tweet replies 
+                from the scraped statuses. Defaults to False.
+            include_rts (bool, optional): Option to include retweets from the 
+                scraped statuses. Defaults to False.
+
+        Returns:
+            list: An array containing dictionaries, each containing data of a status.
+        """
 
         litweets = []
         last_ids = []
@@ -146,7 +219,29 @@ class Client:
                                 max_id: str = None,
                                 count: int = 10,
                                 exclude_replies: bool = False,
-                                include_rts: bool = False):
+                                include_rts: bool = False) -> list:
+        """Scrape the tweets from user if they have a public profile. Will try 
+        to return the exact number of the tweets asked. Will return only the
+        text of the statuses.
+
+        Args:
+            screen_name (str): The twitter username of the user.
+            since_id (str, optional): The twitter status ID of the earliest tweet 
+            that you'd like to scrape. Defaults to None.
+            max_id (str, optional): The twitter status ID of the latest tweet that 
+            you'd like to scrape. Defaults to None.
+            count (int, optional): The number of twitter statuses that you'd like 
+            to scrape. The final number isn't always exactly the same as 
+            the count requested. Defaults to 10.
+            exclude_replies (bool, optional): Option to exclude tweet replies 
+            from the scraped statuses. Defaults to False.
+            include_rts (bool, optional): Option to include retweets from the 
+            scraped statuses. Defaults to False.
+
+        Returns:
+            list: An array containing strings, each of them are the text for
+                the scraped statuses.
+        """
 
         litweets = [tweet['text'] for tweet in self.getprecisenumtweets(
             screen_name=screen_name,
