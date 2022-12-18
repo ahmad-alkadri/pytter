@@ -1,0 +1,11 @@
+LICENSE
+README.md
+setup.py
+pytterrator/__init__.py
+pytterrator/client.py
+pytterrator/constants.py
+pytterrator.egg-info/PKG-INFO
+pytterrator.egg-info/SOURCES.txt
+pytterrator.egg-info/dependency_links.txt
+pytterrator.egg-info/requires.txt
+pytterrator.egg-info/top_level.txt

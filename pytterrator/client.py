@@ -4,13 +4,13 @@ from .constants import *
 import requests
 from urllib.parse import urlencode
 import re
-from numpy import ceil
-
+import time
+import numpy as np
 
 class Client:
-    """A main class for the client. When initiated, it 
-    first obtains the guest-token and generated header for 
-    obtaining the tweets without logging in. Further, it contains 
+    """A main class for the client. When initiated, it
+    first obtains the guest-token and generated header for
+    obtaining the tweets without logging in. Further, it contains
     functions that would work for scraping tweets for any public
     twitter user, ultimately returning an exact number of tweet requested
     if possible.
@@ -20,11 +20,11 @@ class Client:
         """Initiating the Client class
 
         Args:
-            checkbearer (bool, optional): If True, will scrape the twitter.com 
+            checkbearer (bool, optional): If True, will scrape the twitter.com
             page to check a new bearer token. Defaults to False.
         """
         uagent = UserAgent()
-        chosenbrowser = uagent.ie
+        chosenbrowser = uagent.random
 
         if checkbearer:
             user_agent = {
@@ -44,7 +44,6 @@ class Client:
             if len(js_with_bearer) > 1:
                 r = requests.get(js_with_bearer,
                                  headers=user_agent)
-            # print(r.text)
             bearer = re.findall(
                 r'",[a-z]="(.*)",[a-z]="\d{8}"',
                 r.text,
@@ -68,11 +67,11 @@ class Client:
         }
 
     def prepparams(self, pardicts: dict = {}) -> dict:
-        """Clean up a dictionary from keys with empty values in it 
+        """Clean up a dictionary from keys with empty values in it
         ('None' as values).
 
         Args:
-            pardicts (dict, optional): Entered dictionary. 
+            pardicts (dict, optional): Entered dictionary.
             Defaults to {}.
 
         Returns:
@@ -91,8 +90,8 @@ class Client:
         """Check the rate limit of the current Client session.
 
         Args:
-            resources (str, optional): A comma-separated list of resource 
-                families you want to know the current rate limit disposition for. 
+            resources (str, optional): A comma-separated list of resource
+                families you want to know the current rate limit disposition for.
                 Example is 'help,users,search,statuses'. Defaults to None.
 
         Returns:
@@ -116,16 +115,16 @@ class Client:
 
         Args:
             screen_name (str): The twitter username of the user.
-            since_id (str, optional): The twitter status ID of the earliest tweet 
+            since_id (str, optional): The twitter status ID of the earliest tweet
                 that you'd like to scrape. Defaults to None.
-            max_id (str, optional): The twitter status ID of the latest tweet that 
+            max_id (str, optional): The twitter status ID of the latest tweet that
                 you'd like to scrape. Defaults to None.
-            count (int, optional): The number of twitter statuses that you'd like 
-                to scrape. The final number isn't always exactly the same as 
+            count (int, optional): The number of twitter statuses that you'd like
+                to scrape. The final number isn't always exactly the same as
                 the count requested. Defaults to 10.
-            exclude_replies (bool, optional): Option to exclude tweet replies 
+            exclude_replies (bool, optional): Option to exclude tweet replies
                 from the scraped statuses. Defaults to False.
-            include_rts (bool, optional): Option to include retweets from the 
+            include_rts (bool, optional): Option to include retweets from the
                 scraped statuses. Defaults to False.
 
         Returns:
@@ -139,11 +138,10 @@ class Client:
                  'since_id': since_id,
                  'count': int(float(count)),
                  'max_id': max_id,
-                 'exlude_replies': (str(exclude_replies)).lower(),
-                 'include_rts': (str(include_rts)).lower()}))
-        print(queries)
-        urf = uro+'?'+queries
+                 'include_rts': (str(include_rts)).lower(),
+                 'exclude_replies': (str(exclude_replies)).lower()}))
 
+        urf = uro+'?'+queries
         response = requests.get(urf, headers=self.headers).json()
 
         return response
@@ -155,21 +153,21 @@ class Client:
                             count: int = 10,
                             exclude_replies: bool = False,
                             include_rts: bool = False) -> list:
-        """Scrape the tweets from user if they have a public profile. Will try 
+        """Scrape the tweets from user if they have a public profile. Will try
         to return the exact number of the tweets asked.
 
         Args:
             screen_name (str): The twitter username of the user.
-            since_id (str, optional): The twitter status ID of the earliest tweet 
+            since_id (str, optional): The twitter status ID of the earliest tweet
                 that you'd like to scrape. Defaults to None.
-            max_id (str, optional): The twitter status ID of the latest tweet that 
+            max_id (str, optional): The twitter status ID of the latest tweet that
                 you'd like to scrape. Defaults to None.
-            count (int, optional): The number of twitter statuses that you'd like 
-                to scrape. The final number isn't always exactly the same as 
+            count (int, optional): The number of twitter statuses that you'd like
+                to scrape. The final number isn't always exactly the same as
                 the count requested. Defaults to 10.
-            exclude_replies (bool, optional): Option to exclude tweet replies 
+            exclude_replies (bool, optional): Option to exclude tweet replies
                 from the scraped statuses. Defaults to False.
-            include_rts (bool, optional): Option to include retweets from the 
+            include_rts (bool, optional): Option to include retweets from the
                 scraped statuses. Defaults to False.
 
         Returns:
@@ -178,19 +176,16 @@ class Client:
 
         litweets = []
         last_ids = []
-
-        if count <= 200:
-            countr = ceil(count+0.2*count)
-        else:
-            countr = 200
+        lenlastobtained = []
 
         while len(litweets) < count:
+            lenstart = len(litweets)
             if len(last_ids) == 0:
                 statuses = self.tweets_user(
                     screen_name=screen_name,
                     since_id=since_id,
                     max_id=max_id,
-                    count=str(countr),
+                    count=str(count),
                     exclude_replies=exclude_replies,
                     include_rts=include_rts)
             else:
@@ -198,9 +193,10 @@ class Client:
                     screen_name=screen_name,
                     since_id=since_id,
                     max_id=last_ids[len(last_ids)-1],
-                    count=str(countr),
+                    count=str(count-len(litweets)),
                     exclude_replies=exclude_replies,
                     include_rts=include_rts)
+
             for s in range(len(statuses)):
                 stat = statuses[s]
                 stat_txt = stat['text']
@@ -208,8 +204,30 @@ class Client:
                 if len(stat_txt) > 0:
                     if stat not in litweets:
                         litweets.append(stat)
-                        if s == (len(statuses)-1):
+                        if s == len(statuses)-1:
                             last_ids.append(stat_id)
+
+            lastobtained = len(litweets)-lenstart
+            lenlastobtained.append(
+                lastobtained
+            )
+
+            if lastobtained == 0:
+                # If no new tweet added last time,
+                # Give the API a rest a bit
+                time.sleep(0.5)
+
+            if np.sum(
+                # Check the last three scrapes,
+                # if all three are zero, end the scrape process.
+                lenlastobtained[len(
+                    lenlastobtained)-3:len(
+                        lenlastobtained)]) == 0:
+                print(
+                    "Approaching limit, ending the scrape at {} tweets".format(
+                        len(litweets)
+                    ))
+                break
 
         return litweets[0:count]
 
@@ -220,22 +238,22 @@ class Client:
                                 count: int = 10,
                                 exclude_replies: bool = False,
                                 include_rts: bool = False) -> list:
-        """Scrape the tweets from user if they have a public profile. Will try 
+        """Scrape the tweets from user if they have a public profile. Will try
         to return the exact number of the tweets asked. Will return only the
         text of the statuses.
 
         Args:
             screen_name (str): The twitter username of the user.
-            since_id (str, optional): The twitter status ID of the earliest tweet 
+            since_id (str, optional): The twitter status ID of the earliest tweet
             that you'd like to scrape. Defaults to None.
-            max_id (str, optional): The twitter status ID of the latest tweet that 
+            max_id (str, optional): The twitter status ID of the latest tweet that
             you'd like to scrape. Defaults to None.
-            count (int, optional): The number of twitter statuses that you'd like 
-            to scrape. The final number isn't always exactly the same as 
+            count (int, optional): The number of twitter statuses that you'd like
+            to scrape. The final number isn't always exactly the same as
             the count requested. Defaults to 10.
-            exclude_replies (bool, optional): Option to exclude tweet replies 
+            exclude_replies (bool, optional): Option to exclude tweet replies
             from the scraped statuses. Defaults to False.
-            include_rts (bool, optional): Option to include retweets from the 
+            include_rts (bool, optional): Option to include retweets from the
             scraped statuses. Defaults to False.
 
         Returns:
@@ -243,12 +261,18 @@ class Client:
                 the scraped statuses.
         """
 
-        litweets = [tweet['text'] for tweet in self.getprecisenumtweets(
+        # Make sure the limit does not surpass 3000
+        if count > 2000:
+            count = 2000
+
+        litweets = [
+            tweet['text'] for tweet in self.getprecisenumtweets(
             screen_name=screen_name,
             since_id=since_id,
             max_id=max_id,
             count=count,
             exclude_replies=exclude_replies,
-            include_rts=include_rts)]
+            include_rts=include_rts)
+        ]
 
         return litweets
