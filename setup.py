@@ -1,8 +1,8 @@
 from distutils.core import setup
 
 setup(
-    name='pytter',
-    packages=['pytter'],
+    name='pytterrator',
+    packages=['pytterrator'],
     version='0.0.1',
     license='MIT',
     description='A Python module to scrape twitter.',

@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: pytterrator
+Version: 0.0.1
+Summary: A Python module to scrape twitter.
+Author: Ahmad Alkadri
+Author-email: ahmad.alkadri@outlook.com
+License: MIT
+License-File: LICENSE
