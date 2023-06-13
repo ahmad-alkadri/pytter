@@ -7,7 +7,7 @@ A simple Python module to obtain tweets from users at
 twitter developer's account. This is achieved by using
 twitter's own v1.1 API and leveraging the guest token,
 thus making the client appears as if they are simply
-a user who does not log in. This would benefit us for
+a user who does not log in (a guest). This would benefit us for
 simple tweets scraping for individual users; however
 because of the rate limit it would not work for
 large-scale data scraping.
@@ -30,7 +30,7 @@ specifically from the `master` branch.
 ## Example usage
 
 Let's say we want to get the last 1000 tweets made by
-@jack (basically this guy created Twitter), we can simply
+@elonmusk, we can simply
 type the following lines on python:
 
 ```python
@@ -40,10 +40,11 @@ from pytterrator import Client
 client = Client()
 
 arrtweets = client.getprecisenumtweetstext(
-        "jack",
+        "elonmusk",
         count=1000,
         exclude_replies=False,
-        include_rts=False
+        include_rts=False,
+        limit_singlereq=20,
     )
 print(arrtweets)
 ```
@@ -59,16 +60,19 @@ simply, an iterating process (hence the name, *pytterrator*),
 which is the module would keep making the API request and
 accumulate the number of tweets until they reach the
 requested number. A single API request of tweets
-to Twitter's v1.1 API usually will return about 100 tweets.
+to Twitter's v1.1 API by default will be limited to 10 tweets.
 So, if you're asking for 500 tweets, expect the module
-to iterate 5–6 times until you obtain the requested number
+to iterate about 50 times until you obtain the requested number
 of tweets.
 
 Finally, a hard limit is imposed on the number of tweets that
-you can scrape (2000) because of the rate limit.
+you can scrape (1000) because of the rate limit.
 Also, depending on how often you use this module,
 the rate could change accordingly. To prevent your app
 from depleting the whole rate limit, this module
 will cut the scraping process if it sees the API is
 approaching its rate limit (usually when it sees
-the returned number of tweets approaching zero).
+the returned number of tweets approaching zero). Also,
+to prevent your app or IP address from being blacklisted
+by Twitter, I'd suggest to not make burst request within
+a short timeframe.

@@ -4,10 +4,11 @@ from pytterrator import Client
 client = Client()
 
 arrtweets = client.getprecisenumtweetstext(
-        "jack",
-        count=12000,
+        "elonmusk",
+        count=141,
         exclude_replies=True,
-        include_rts=False
+        include_rts=False,
+        limit_singlereq=20,
     )
 print(arrtweets)
 print(len(arrtweets))

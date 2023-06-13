@@ -2,3 +2,4 @@ build
 devs
 pytter.egg-info
 *.code-workspace
+*env/*
