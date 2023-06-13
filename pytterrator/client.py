@@ -142,7 +142,11 @@ class Client:
                  'exclude_replies': (str(exclude_replies)).lower()}))
 
         urf = uro+'?'+queries
+
+        print(urf)
         response = requests.get(urf, headers=self.headers).json()
+
+        # print(response)
 
         return response
 
@@ -261,9 +265,9 @@ class Client:
                 the scraped statuses.
         """
 
-        # Make sure the limit does not surpass 3000
-        if count > 2000:
-            count = 2000
+        # Make sure the limit does not surpass 25
+        if count > 25:
+            count = 25
 
         litweets = [
             tweet['text'] for tweet in self.getprecisenumtweets(

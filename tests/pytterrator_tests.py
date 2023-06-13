@@ -5,7 +5,7 @@ client = Client()
 
 arrtweets = client.getprecisenumtweetstext(
         "jack",
-        count=12000,
+        count=30,
         exclude_replies=True,
         include_rts=False
     )
